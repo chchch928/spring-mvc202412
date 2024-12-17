@@ -5,6 +5,7 @@ import lombok.*;
 @Getter @Setter @ToString
 @EqualsAndHashCode
 @AllArgsConstructor
+@NoArgsConstructor
 public class Product {
     private Long id; // 상품 아이디
     private String name; // 상품명
