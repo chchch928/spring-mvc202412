@@ -72,6 +72,9 @@
             margin-right: 20px;
         }
 
+        .error {
+            color: red;
+        }
     </style>
 </head>
 
@@ -80,19 +83,32 @@
 <div class="wrap">
 
     <section class="score">
-        <h1>시험 점수 등록</h1>
+        <h1>${title} 애플리케이션</h1>
+
+        <%--  JSP 주석
+        <ul>
+            <c:forEach var="f" items="${foods}">
+                <li>${f}</li>
+            </c:forEach>
+        </ul>
+        --%>
+
         <form id="score-form">
             <label>
                 # 이름: <input type="text" name="name">
+                <p class="error" id="studentName"></p>
             </label>
             <label>
                 # 국어: <input type="text" name="kor">
+                <p class="error" id="korean"></p>
             </label>
             <label>
                 # 영어: <input type="text" name="eng">
+                <p class="error" id="english"></p>
             </label>
             <label>
                 # 수학: <input type="text" name="math">
+                <p class="error" id="math"></p>
             </label>
             <label>
                 <button id="createBtn" type="submit">확인</button>
@@ -126,10 +142,11 @@
 <script>
     const API_URL = '/api/v1/scores';
 
+    const $scores = document.getElementById('scores');
+
     // 화면에 성적목록을 렌더링하는 함수
     function renderScoreList(data) {
 
-        const $scores = document.getElementById('scores');
         // 리셋
         $scores.innerHTML = '';
 
@@ -139,7 +156,7 @@
 
         data.forEach(({id, name, kor, eng, math}) => {
             $scores.innerHTML += `
-                    <li>
+                    <li data-score-id="\${id}">
                         # 이름: \${name}, 국어: \${kor}점,
                         영어: \${eng}점, 수학: \${math}점
                         <a href='#' class='del-btn'>삭제</a>
@@ -157,23 +174,65 @@
         // 화면에 정보 렌더링
         renderScoreList(data);
     }
-    // 서버로 성적등록 POST요청을 전송하는 함수
-    async function fetchPostScore(scoreObj){
-        // POST요청은 단순히 요청만 보내는게 아니라
-        // 서버에 데이터를 제공해야함
-        const res = await fetch(API_URL,{
-            method: 'POST',
-            headers:{'Content-Type': 'application/JSON'},
-            // @RequestBodu
-            body: JSON.stringify(scoreObj)
+    // // 서버로 성적 등록 POST요청을 전송하는 함수
+    // async function fetchPostScore(scoreObj) {
+    //     // POST요청은 단순히 요청만 보내는게 아니라
+    //     // 서버에 데이터를 제공해야함
+    //     const res = await fetch(API_URL, {
+    //         method: 'POST',
+    //         headers: { 'Content-Type': 'application/json' },
+    //         body: JSON.stringify(scoreObj)
+    //     });
+    //     if (res.status === 200) {
+    //         // 등록된 내용을 렌더링
+    //         fetchGetScores();
+    //         document.getElementById('score-form').reset();
+    //     } else {
+    //         alert('에러가 발생했습니다!');
+    //     }
+    // }
 
+    // 서버로 성적 등록 POST요청을 전송하는 함수
+    async function fetchPostScore({name, kor, eng, math}) {
+
+        // 요청 시작시 에러메시지 리셋
+        document.querySelectorAll('.error').forEach($errorParagraph => {
+            $errorParagraph.textContent = '';
         });
-        if(res.status===200){
+
+        // POST요청은 단순히 요청만보내는게 아니라
+        // 서버에 데이터를 제공해야함
+        const res = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                studentName: name,
+                korean: kor,
+                english: eng,
+                math: math
+            })
+        });
+        if (res.status === 200) {
             // 등록된 내용을 렌더링
             fetchGetScores();
             document.getElementById('score-form').reset();
-        }else{
-            alert('에러가 발생했습니다')
+        } else if (res.status === 400) {
+            // 서버의 에러 메시지 파싱
+            const errorJson = await res.json();
+            for (const property in errorJson) {
+                document.getElementById(property).textContent = errorJson[property];
+            }
+        }
+    }
+
+    async function fetchDeleteScore(id) {
+        const res = await fetch(`\${API_URL}/\${id}`, {
+            method: 'DELETE'
+        });
+        if (res.status === 200) {
+            fetchGetScores();
+        } else {
+            alert('삭제 실패!');
         }
     }
 
@@ -198,13 +257,25 @@
         const $form = document.getElementById('score-form');
         // formData객체 생성
         const formData = new FormData($form);
-
         const scoreObj = Object.fromEntries(formData.entries());
         console.log(scoreObj);
 
-        // 서버로 POST요청을 전송
+        // 서버로 POST요청 전송
         fetchPostScore(scoreObj);
 
+    });
+
+    // 삭제 요청 이벤트 등록
+    $scores.addEventListener('click', e => {
+        e.preventDefault();
+        if (!e.target.matches('.del-btn')) return;
+
+        // 서버에 삭제요청 전송
+        // 클릭한 요소가 가진 서버 id를 읽어내야 함.
+        const id = e.target.closest('li').dataset.scoreId;
+        console.log('id: ', id);
+
+        fetchDeleteScore(id);
     });
 
     //==== 실행 코드 ====//
@@ -214,3 +285,4 @@
 </body>
 
 </html>
+

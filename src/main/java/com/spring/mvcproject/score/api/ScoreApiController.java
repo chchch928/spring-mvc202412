@@ -1,7 +1,12 @@
 package com.spring.mvcproject.score.api;
 
+import com.spring.mvcproject.score.dto.request.ScoreCreateDto;
 import com.spring.mvcproject.score.entity.Score;
+import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -57,14 +62,66 @@ public class ScoreApiController {
         return comparing;
     }
     // 성적 정보 생성 요청 처리
+//    @PostMapping
+//    public String createScore(
+//            //클라이언트가 성적정보를 JSON으로 보냈다
+//            @RequestBody Score score
+//    ){
+//        score.setId(nextId++);
+//        scoreStore.put(score.getId(), score);
+//        return "성적 정보 생성 완료";
+//    }
+
+    // chap 5_3
+    // 성적 정보 생성 요청 처리
     @PostMapping
-    public String createScore(
-            //클라이언트가 성적정보를 JSON으로 보냈다
-            @RequestBody Score score
-    ){
+    public ResponseEntity<?> createScore(
+            // 클라이언트가 성적정보를 JSON으로 보냈다
+            @RequestBody @Valid ScoreCreateDto dto
+            // 입력값 검증 결과를 가진 객체
+            , BindingResult bindingResult
+    ) {
+        if (bindingResult.hasErrors()) { // 입력값 검증에서 에러가 발생했다면
+            Map<String, String> errorMap = new HashMap<>();
+            bindingResult.getFieldErrors().forEach(err -> {
+                errorMap.put(err.getField(), err.getDefaultMessage());
+            });
+            return ResponseEntity
+                    .badRequest()
+                    .body(errorMap)
+                    ;
+        }
+
+
+        // ScoreCreateDto를 Score로 변환하는 작업
+        Score score = new Score(dto);
         score.setId(nextId++);
+
+        // 아래 코드 대신 new Score(dto)를 넣고 Score클래스에서 생성자 만들기
+//        score.setName(dto.getStudentName());
+//        score.setKor(dto.getKorean());
+//        score.setEng(dto.getEnglish());
+//        score.setMath(dto.getMath());
+
+//        scoreStore.put(score.getId(), score);
+//        return "성적 정보 생성 완료! " + score;
         scoreStore.put(score.getId(), score);
-        return "성적 정보 생성 완료";
+        return ResponseEntity
+                .ok()
+                .body("성적 정보 생성 완료! " + score);
+
+
+
     }
+
+    // 성적 정보 삭제요청 처리
+    @DeleteMapping("/{id}")
+    public String deleteScore(
+            @PathVariable Long id
+    ){
+        scoreStore.remove(id);
+        return "성적 정보 삭제 성공 - id: " + id;
+    }
+
 
 }
