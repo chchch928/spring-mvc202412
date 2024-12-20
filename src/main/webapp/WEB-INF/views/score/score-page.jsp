@@ -154,11 +154,11 @@
         document.getElementById('count').textContent = data.length;
 
 
-        data.forEach(({id, name, kor, eng, math}) => {
+        data.forEach(({id, maskingName, total, average, rank}) => {
             $scores.innerHTML += `
                     <li data-score-id="\${id}">
-                        # 이름: \${name}, 국어: \${kor}점,
-                        영어: \${eng}점, 수학: \${math}점
+                        # 이름: <a href="/score/\${id}">\${maskingName}</a>, 총점: \${total}점,
+                        평균: \${average}점, 석차: \${rank}
                         <a href='#' class='del-btn'>삭제</a>
                     </li>
                 `;
@@ -174,23 +174,6 @@
         // 화면에 정보 렌더링
         renderScoreList(data);
     }
-    // // 서버로 성적 등록 POST요청을 전송하는 함수
-    // async function fetchPostScore(scoreObj) {
-    //     // POST요청은 단순히 요청만 보내는게 아니라
-    //     // 서버에 데이터를 제공해야함
-    //     const res = await fetch(API_URL, {
-    //         method: 'POST',
-    //         headers: { 'Content-Type': 'application/json' },
-    //         body: JSON.stringify(scoreObj)
-    //     });
-    //     if (res.status === 200) {
-    //         // 등록된 내용을 렌더링
-    //         fetchGetScores();
-    //         document.getElementById('score-form').reset();
-    //     } else {
-    //         alert('에러가 발생했습니다!');
-    //     }
-    // }
 
     // 서버로 성적 등록 POST요청을 전송하는 함수
     async function fetchPostScore({name, kor, eng, math}) {
@@ -267,8 +250,8 @@
 
     // 삭제 요청 이벤트 등록
     $scores.addEventListener('click', e => {
-        e.preventDefault();
         if (!e.target.matches('.del-btn')) return;
+        e.preventDefault();
 
         // 서버에 삭제요청 전송
         // 클릭한 요소가 가진 서버 id를 읽어내야 함.
@@ -285,4 +268,3 @@
 </body>
 
 </html>
-

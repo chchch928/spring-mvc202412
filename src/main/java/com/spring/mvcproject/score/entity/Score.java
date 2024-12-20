@@ -23,8 +23,4 @@ public class Score {
 
     }
 
-    public double averageScore() {
-        return (kor + eng + math)/3;
-    }
-
 }

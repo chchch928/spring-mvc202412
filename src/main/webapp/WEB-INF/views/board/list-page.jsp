@@ -4,36 +4,8 @@
 <html>
 
 <head>
+    <%@include file="include/static-file.jsp"%>
 
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>스프링 연습프로젝트 사이트</title>
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Single+Day&display=swap" rel="stylesheet">
-
-    <!-- reset -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reset-css@5.0.1/reset.min.css">
-
-    <!-- fontawesome css: https://fontawesome.com -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.8.2/css/all.min.css">
-
-    <!-- https://linearicons.com/free#cdn -->
-    <link rel="stylesheet" href="https://cdn.linearicons.com/free/1.0.0/icon-font.min.css">
-
-    <!-- bootstrap css -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
-
-    <link rel="stylesheet" href="/assets/css/main.css">
-
-    <!-- bootstrap js -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" defer></script>
-
-    <!-- side menu event js -->
-    <script src="/assets/js/side-menu.js" defer></script>
 
     <link rel="stylesheet" href="/assets/css/list.css">
 
@@ -41,6 +13,27 @@
         .card-container .card .card-title-wrapper .time-view-wrapper>div.hit {
             background: yellow;
         }
+        #wrap .card-wrapper {
+            position: relative;
+        }
+        .card {
+            position: static;
+        }
+
+        .new-badge {
+            background: red;
+            font-size: 1.1em;
+            border-radius: 5px;
+            padding: 2px 10px;
+            margin-top: 14px;
+            position: absolute;
+            left: 50%;
+            top: -30px;
+            transform: translateX(-50%);
+            color: #fff;
+        }
+
+
     </style>
 
 </head>
@@ -48,40 +41,7 @@
 <body>
 
 <!-- header -->
-<header>
-    <div class="inner-header">
-        <h1 class="logo">
-            <a href="/board/list">
-                <img src="/assets/img/logo.png" alt="로고이미지">
-            </a>
-        </h1>
-
-        <div class="profile-box">
-
-        </div>
-
-        <h2 class="intro-text">Welcome</h2>
-        <a href="#" class="menu-open">
-            <span class="menu-txt">MENU</span>
-            <span class="lnr lnr-menu"></span>
-        </a>
-    </div>
-
-    <nav class="gnb">
-        <a href="#" class="close">
-            <span class="lnr lnr-cross"></span>
-        </a>
-        <ul>
-            <li><a href="/">Home</a></li>
-            <li><a href="#">About</a></li>
-            <li><a href="/board/list">Board</a></li>
-            <li><a href="#">Contact</a></li>
-            <li><a href="/members/sign-up">Sign Up</a></li>
-            <li><a href="/members/sign-in">Sign In</a></li>
-        </ul>
-    </nav>
-
-</header>
+<%@include file="include/header.jsp"%>
 
 <div id="wrap">
 
@@ -194,11 +154,13 @@
     const API_BASE_URL = '/api/v1/boards';
 
     const $cardContainer = document.querySelector('.card-container');
+    const $card = document.querySelector('.card')
 
     //================= 삭제버튼 스크립트 =================//
     const modal = document.getElementById('modal'); // 모달창 얻기
     const confirmDelete = document.getElementById('confirmDelete'); // 모달 삭제 확인버튼
     const cancelDelete = document.getElementById('cancelDelete'); // 모달 삭제 취소 버튼
+
 
     $cardContainer.addEventListener('click', e => {
         // 삭제 버튼을 눌렀다면~
@@ -296,31 +258,45 @@
         window.location.href = '/board/write';
     };
 
+    //  open detail-page event
+    $cardContainer.addEventListener('click', e => {
+        // 카드 클릭 이벤트를 확인
+        const $card = e.target.closest('.card');
+        if (!$card) return; // 클릭한 요소가 카드가 아니면 무시
+
+        const id = $card.dataset.bno; // 카드의 데이터 속성에서 게시물 ID 가져오기
+        if (!id) return;
+
+        // Detail 페이지로 이동
+        window.location.href = `/board/detail?id=${id}`;
+    });
 
     //====== 일반 함수 ======//
     // 화면에 게시물배열을 렌더링
     function renderBoardList(boardList) {
         $cardContainer.innerHTML = ''; // reset
 
-        boardList.forEach(({id, title, content, regDateTime, viewCount}) => {
+        // bno: id, shortTitle: title 로 하면 굳이  내부 html 수정할 필요없다
+        boardList.forEach(({bno, shortTitle, shortContent, date, view,newArticle}) => {
             $cardContainer.innerHTML += `
               <div class="card-wrapper">
-                <section class="card" data-bno="\${id}">
+                <section class="card" data-bno="\${bno}">
                   <div class="card-title-wrapper">
-                    <h2 class="card-title">\${title}</h2>
+                    \${newArticle ? '<span class ="new-badge">NEW</span>' : ''}
+                    <h2 class="card-title">\${shortTitle}</h2>
                     <div class="time-view-wrapper">
                       <div class="time">
                         <i class="far fa-clock"></i>
-                        \${regDateTime}
+                        \${date}
                       </div>
                       <div class="view">
                         <i class="fas fa-eye"></i>
-                        <span class="view-count">\${viewCount}</span>
+                        <span class="view-count">\${view}</span>
                       </div>
                     </div>
                   </div>
                   <div class="card-content">
-                    \${content}
+                    \${shortContent}
                   </div>
                 </section>
 

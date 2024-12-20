@@ -6,35 +6,7 @@
 
 <head>
 
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>스프링 연습프로젝트 사이트</title>
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Single+Day&display=swap" rel="stylesheet">
-
-    <!-- reset -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reset-css@5.0.1/reset.min.css">
-
-    <!-- fontawesome css: https://fontawesome.com -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.8.2/css/all.min.css">
-
-    <!-- https://linearicons.com/free#cdn -->
-    <link rel="stylesheet" href="https://cdn.linearicons.com/free/1.0.0/icon-font.min.css">
-
-    <!-- bootstrap css -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
-
-    <link rel="stylesheet" href="/assets/css/main.css">
-
-    <!-- bootstrap js -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" defer></script>
-
-    <!-- side menu event js -->
-    <script src="/assets/js/side-menu.js" defer></script>
+    <%@include file="include/static-file.jsp"%>
 
 
     <!-- ck editor -->
@@ -120,8 +92,13 @@
         .ck-editor__editable p {
             margin: 0;
         }
-        .error{
-            color:red;
+        .error {
+            color: #f00;
+            font-size: 0.9em;
+            margin-left: 10px;
+        }
+        .label-container {
+            display: flex;
         }
     </style>
 </head>
@@ -129,40 +106,7 @@
 <body>
 
 <!-- header -->
-<header>
-    <div class="inner-header">
-        <h1 class="logo">
-            <a href="/board/list">
-                <img src="/assets/img/logo.png" alt="로고이미지">
-            </a>
-        </h1>
-
-        <div class="profile-box">
-
-        </div>
-
-        <h2 class="intro-text">Welcome</h2>
-        <a href="#" class="menu-open">
-            <span class="menu-txt">MENU</span>
-            <span class="lnr lnr-menu"></span>
-        </a>
-    </div>
-
-    <nav class="gnb">
-        <a href="#" class="close">
-            <span class="lnr lnr-cross"></span>
-        </a>
-        <ul>
-            <li><a href="/">Home</a></li>
-            <li><a href="#">About</a></li>
-            <li><a href="/board/list">Board</a></li>
-            <li><a href="#">Contact</a></li>
-            <li><a href="/members/sign-up">Sign Up</a></li>
-            <li><a href="/members/sign-in">Sign In</a></li>
-        </ul>
-    </nav>
-
-</header>
+<%@include file="include/header.jsp"%>
 
 
 <div id="wrap" class="form-container">
@@ -170,15 +114,16 @@
     <form id="board-form" novalidate>
         <label for="title">작성자</label>
         <input type="text" id="writer" name="writer" value="익명">
-        <label for="title">제목</label>
-        <input type="text"  id="title" name="title" required>
-        <p class="error" id="error-title"></p>
 
-        <label for="content">내용</label>
-        <textarea id="content"  name="content" maxlength="200" required></textarea>
-        <p class="error" id="error-content"></p>
+        <div class="label-container">
+            <label for="title">제목</label> <span class="error" id="title"></span>
+        </div>
+        <input type="text" id="title" name="title" required>
 
-
+        <div class="label-container">
+            <label for="content">내용 </label>
+        </div>
+        <textarea id="content" name="content" maxlength="200" required></textarea>
         <div class="buttons">
             <button class="list-btn" type="button"
                     onclick="window.location.href='/board/list'">목록</button>
@@ -208,7 +153,7 @@
             ],
         } )
         .then(newEditor => {
-            editor = newEditor;
+            // editor = newEditor;
         })
         .catch(err => console.error(err));
 </script>
@@ -218,23 +163,29 @@
     const API_BASE_URL = '/api/v1/boards';
     const $form = document.getElementById('board-form');
 
-    // async function fetchPost(payload) {
-    //     const res = await fetch(API_BASE_URL, {
-    //         method: 'POST',
-    //         headers: { 'Content-Type': 'application/json' },
-    //         body: JSON.stringify(payload)
-    //     });
-    //     if (res.status === 200) {
-    //         alert('게시물이 등록되었습니다.');
-    //         // 목록으로 링크이동
-    //         window.location.href='/board/list';
-    //     } else {
-    //         alert('등록 실패!');
-    //     }
-    // }
+    // 에러 메시지 처리
+    function createErrorMessage(errorObj) {
+        // 기존 에러 메시지 정리
+        const $errors = document.querySelectorAll('.error');
+        $errors.forEach($err => $err.textContent = '');
 
+
+        // 새 에러메시지 세팅
+        for (const key in errorObj) {
+            if (key === 'content') {
+                const $errorSpan = document.createElement('span');
+                $errorSpan.classList.add('error');
+                $errorSpan.textContent = errorObj[key];
+                document.querySelector('label[for=content]').after($errorSpan);
+            }
+            document.getElementById(key).textContent = errorObj[key];
+
+        }
+    }
+
+
+    // POST 요청 서버로 보내기 함수
     async function fetchPost(payload) {
-
         const res = await fetch(API_BASE_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -244,45 +195,10 @@
             alert('게시물이 등록되었습니다.');
             // 목록으로 링크이동
             window.location.href='/board/list';
-         }
-        else if(res.status === 400) {
-            const errorJson = await res.json();
-            // 기존 에러 메시지 초기화
-            document.querySelectorAll('.error').forEach(el => el.textContent = '');
-
-            // for (const property in errorJson) {
-            //     document.getElementById(property).textContent = errorJson[property];
-            // }
-
-            // 서버에서 반환된 에러 메시지를 필드에 표시
-            for (const property in errorJson) {
-                const errorElement = document.getElementById(`error-${property}`);
-                if (errorElement) {
-                    errorElement.textContent = errorJson[property];
-                } else {
-                    console.warn(`ID가 error-${property}인 요소를 찾을 수 없습니다. 키: ${property}`);
-                }
-            }
-
+        } else if (res.status === 400) {
+            const errorObj = await res.json();
+            createErrorMessage(errorObj);
         }
-        <%--else if (res.status === 400) {--%>
-        <%--    const errorJson = await res.json();--%>
-
-        <%--    // 기존 에러 메시지 초기화--%>
-        <%--    document.querySelectorAll('.error').forEach(el => el.textContent = '');--%>
-
-        <%--    // 서버에서 반환된 에러 메시지를 필드에 표시--%>
-        <%--    for (const property in errorJson) {--%>
-        <%--        const errorElement = document.getElementById(`error-${property}`);--%>
-        <%--        if (errorElement) {--%>
-        <%--            errorElement.textContent = errorJson[property];--%>
-        <%--        } else {--%>
-        <%--            console.error(`ID가 error-${property}인 요소를 찾을 수 없습니다. 필드: ${property}`);--%>
-        <%--        }--%>
-        <%--    }--%>
-        <%--}--%>
-
-
     }
 
     $form.addEventListener('submit', e => {
@@ -316,3 +232,6 @@
 </html>
 
 
+</body>
+
+</html>
