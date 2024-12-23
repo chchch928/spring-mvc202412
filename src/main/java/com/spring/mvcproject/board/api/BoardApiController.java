@@ -1,15 +1,16 @@
 package com.spring.mvcproject.board.api;
 
 import com.spring.mvcproject.board.dto.request.BoardSaveDto;
-import com.spring.mvcproject.board.dto.response.BoardDetailDto;
+import com.spring.mvcproject.board.dto.response.BoardDetailResponse;
 import com.spring.mvcproject.board.dto.response.BoardListDto;
 import com.spring.mvcproject.board.entity.Board;
+import com.spring.mvcproject.board.service.BoardService;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -17,21 +18,15 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/v1/boards")
 public class BoardApiController {
 
-    private Map<Long, Board> boardStore = new HashMap<>();
+    // 컨트롤러는 서비스에게 의존
+    private BoardService boardService;
 
-    private Long nextId = 1L;
-
-    public BoardApiController() {
-        Board b1 = Board.of(nextId++,"안녕하세요","제 이름은 김말복입니다");
-        Board b2 = Board.of(nextId++,"오늘 날씨가 춥네요","다들 옷 든든히 입고 다니세요");
-
-        Board b3 =Board.of(nextId++, "요즘 유행하는 신발이 뭔가요??", "신발 사려고 하는데 추천좀요");
-
-        boardStore.put(b1.getId(), b1);
-        boardStore.put(b2.getId(), b2);
-        boardStore.put(b3.getId(), b3);
-
+    @Autowired
+    public BoardApiController(BoardService boardService) {
+        this.boardService = boardService;
     }
+
+
     // 게시물 목록조회 GET
 //    @GetMapping
 //    public List<Board> boardList() {
@@ -43,56 +38,48 @@ public class BoardApiController {
 
     @GetMapping
     public ResponseEntity<List<BoardListDto>> boardList(
+            @RequestParam(required = false, defaultValue ="id") String sort
     ) {
-      List<BoardListDto>responseList = new ArrayList<>(boardStore.values())
-              .stream()
-              .map(board ->new BoardListDto(board))
-              .collect(Collectors.toList());
+      List<BoardListDto>responseList = boardService.getList(sort);
 
       return ResponseEntity.ok().body(responseList);
     }
 
+    // 게시물 상세조회 요청처리
     @GetMapping("/{id}")
-    public ResponseEntity<?>findOne(@PathVariable Long id) {
-        Board targetboard = boardStore.get(id);
-        if(targetboard == null) {
+    public ResponseEntity<?>detail(@PathVariable Long id) {
+        try{
+            BoardDetailResponse responseDto = boardService.getDetail(id);
+
+            return ResponseEntity.ok().body(responseDto);
+        } catch (IllegalStateException e) {
             return ResponseEntity
-                    .status(404)
-                    .body("해당 정보를 찾을 수 없습니다 id: " + id);
+                    .badRequest()
+                    .body(e.getMessage());
         }
-        BoardDetailDto responseDto = new BoardDetailDto(targetboard);
-
-
-        return ResponseEntity
-                .ok()
-                .body(responseDto);
-
 
     }
 
 
     //게시물 삭제 DELETE
     @DeleteMapping("/{id}")
-    public String deleteBoard(
+    public ResponseEntity<?> deleteBoard(
             @PathVariable Long id
     ) {
-        boardStore.remove(id);
-        return id+ "번 게시물이 삭제되었습니다";
+        try{
+        boardService.remove(id);
+        return ResponseEntity
+                .ok()
+                .body("성적정보 삭제 성공 -id: "+id);
+
+        } catch(IllegalStateException e){
+            return ResponseEntity.badRequest().body(e.getMessage());
+
+        }
+
     }
 
-    //게시물 등록 POST
-//    @PostMapping
-//    public String createBoard(
-//            @RequestBody Board board
-//    ){
-//        board.setId(nextId++);
-//        board.setRegDateTime(LocalDateTime.now());
-//        System.out.println("board = " + board);
-//        boardStore.put(board.getId(), board);
-//
-//        return "게시물이 생성되었습니다 ";
-//
-//    }
+
     // 게시물 등록 POST
     @PostMapping
     public ResponseEntity<?> createBoard(
@@ -111,13 +98,7 @@ public class BoardApiController {
                     ;
         }
 
-        System.out.println("dto = " + dto);
-
-        Board board = dto.toEntity();
-        board.setId(nextId++);
-
-        System.out.println("board = " + board);
-        boardStore.put(board.getId(), board);
+        Board board = boardService.create(dto);
 
         return ResponseEntity.ok().body("게시물 등록 성공! - "+ board);
 

@@ -14,15 +14,15 @@
 
 <div id="wrap" class="form-container" >
 
-    <h1><span id ="bno">0</span>번 게시물 내용~ </h1>
-    <h2># 작성일자: <span id ="date"></span></h2>
+    <h1><span id="bno">1</span>번 게시물 내용~ </h1>
+    <h2># 작성일자: <span id="date">2024-12-20</span></h2>
     <label for="writer">작성자</label>
     <input type="text" id="writer" name="writer" value="익명" readonly>
     <label for="title">제목</label>
     <input type="text" id="title" name="title" value="이마트 가자고~~~" readonly>
     <label for="content">내용</label>
     <div id="content">
-        하하호호히흐흐히히히호호호호오오옹
+        하하호호히히흐흐히히히허허호오ㅗ오오오오오옹
     </div>
 
     <div class="buttons">
@@ -152,25 +152,26 @@
 </div>
 
 <script>
-    async function fetchBoardDetail(){
-        const res = await fetch('api/v1/boards/{id}');
-        const data = await res.json();
-        console.log(data)
+    // 서버에 게시물 상세조회 API 요청
+    async function fetchDetail() {
+        const url = `/api/v1/boards/${id}`;
+        console.log('request url: ', url);
 
-        //렌더링
-        for(const property in data){
-            const $target = document.getElementById(property);
-            if($target){
-                $target.textContent = data[property];
-            }
+        const res = await fetch(url);
+        const { bno, content, date, board_title: title } = await res.json();
+        // console.log(data);
 
-        }
+        // 렌더링
+        document.getElementById('bno').textContent = bno;
+        document.getElementById('content').innerHTML = content;
+        document.getElementById('title').value = title;
+        document.getElementById('date').textContent = date;
     }
 
     fetchDetail();
 </script>
 
-
 </body>
 
 </html>
+
