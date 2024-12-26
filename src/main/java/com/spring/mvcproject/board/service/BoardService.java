@@ -5,57 +5,41 @@ import com.spring.mvcproject.board.dto.response.BoardDetailResponse;
 import com.spring.mvcproject.board.dto.response.BoardListDto;
 import com.spring.mvcproject.board.entity.Board;
 import com.spring.mvcproject.board.repository.BoardRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+// 컨트롤러와 리포지토리 사이에서 중간 잡다한 처리(DTO 변환, 트랜잭션 처리 등) 담당
 @Service
+@RequiredArgsConstructor
 public class BoardService {
 
-    private BoardRepository boardRepository;
+    private final BoardRepository boardRepository;
 
-    @Autowired
-    public BoardService(BoardRepository boardRepository) {
-        this.boardRepository = boardRepository;
-    }
-
-    public List<BoardListDto> getList(String sort){
-        List<BoardListDto>responseData = boardRepository.findAll(sort)
-                .stream()
-                .map(board -> new BoardListDto(board))
+    // 목록조회시 데이터 변환처리
+    public List<BoardListDto> getList() {
+        // db에서 가져온 원본데이터를 브라우저에 렌더링에 적합한 데이터로 변환
+        return boardRepository.findAll().stream()
+                .map(BoardListDto::new)
                 .collect(Collectors.toList());
-
-        return responseData;
     }
-    // 성적 단일 조회 핵심 비즈로직 처리
-    public BoardDetailResponse getDetail(Long id){
-        Board targetBoard = boardRepository.findOne(id);
 
-        // 예외처리
-        if(targetBoard == null){
-            throw new IllegalStateException(id + " not found");
-        }
-        //----------틀린부분---------------//
-        // BoardDetailResponse에서 from을 이용해서 만들었기때문에
-        // BoardDetailResponse.from(targetBoard)를 사용해서 데이터를 불러 와야함
-        BoardDetailResponse responseDto =  BoardDetailResponse.from(targetBoard);
-        return responseDto;
-
+    // 삭제 처리시 중간 처리
+    public boolean delete(Long id) {
+        return boardRepository.delete(id);
     }
-    public Board create(BoardSaveDto dto){
-        Board board = dto.toEntity();
-        boardRepository.save(board);
-        return board;
 
+    // 게시물 등록시 중간처리
+    public boolean create(BoardSaveDto dto) {
+        return boardRepository.save(dto.toEntity());
     }
-    public void remove(Long id){
-        boolean removed = boardRepository.deleteById(id);
-        if(!removed){
-            throw new IllegalStateException(id + " not found");
-        }
+
+    // 게시물 상세조회 중간처리
+    public BoardDetailResponse getArticle(Long id) {
+        Board foundBoard = boardRepository.findOne(id);
+        return BoardDetailResponse.from(foundBoard);
     }
 
 }

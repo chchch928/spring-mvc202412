@@ -1,22 +1,21 @@
 package com.spring.mvcproject.board.repository;
 
 import com.spring.mvcproject.board.entity.Board;
-import com.spring.mvcproject.score.entity.Score;
 
 import java.util.List;
 
+// 게시물 데이터를 저장, 조회, 수정, 삭제하는 명세서
 public interface BoardRepository {
 
-    // 전체 조회 기능 명세
-    List<Board> findAll(String sort);
+    // 게시물 목록 조회
+    List<Board> findAll();
 
-    // 개별 조회 기능 명세
+    // 게시물 생성
+    boolean save(Board board);
+
+    // 게시물 삭제
+    boolean delete(Long id);
+
+    // 게시물 개별 조회
     Board findOne(Long id);
-
-    // 저장 기능 명세
-    void save(Board board);
-
-    // 삭제 기능 명세
-    boolean deleteById(Long id);
-
 }
